@@ -1,8 +1,39 @@
 require('dotenv').config(); // Load environment variables
 const express = require("express");
+const cors = require("cors");
 const app = express();
 
 const routes = require("./routes/index.route.js");
+
+// Enable CORS for all localhost origins (any port)
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Allow any localhost origin regardless of port
+    if (origin.match(/^http:\/\/localhost:\d+$/) || origin.match(/^http:\/\/127\.0\.0\.1:\d+$/)) {
+      return callback(null, true);
+    }
+    
+    // For development, also allow these common origins
+    const allowedOrigins = [
+      'http://localhost',
+      'http://127.0.0.1',
+      'file://' // For local file access
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Reject other origins
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true, // Allow cookies and auth headers
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"]
+}));
 
 app.use(express.json());
 app.use("", routes);

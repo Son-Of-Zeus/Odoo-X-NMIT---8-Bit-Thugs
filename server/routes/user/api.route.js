@@ -77,10 +77,6 @@ router.post("/signup", async (req, res) => {
         createdAt: true,
       }
     });
-  
-
-
- 
 
     res.status(201).json({
       message: "User created successfully",
