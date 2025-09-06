@@ -64,7 +64,6 @@ router.post("/signup", async (req, res) => {
     const token = generateToken(user);
     const refreshToken = generateToken(user);
    
-    //i wanna update the user with the jwtToken and refreshToken
     await prisma.user.update({
       where: { id: user.id },
       data: { jwtToken: token, refreshToken: refreshToken },
@@ -79,6 +78,7 @@ router.post("/signup", async (req, res) => {
       }
     });
   
+
 
  
 
@@ -130,9 +130,16 @@ router.post("/login", async (req, res) => {
 
     // Generate JWT token
     const jwtToken = generateToken(user);
+    const refreshToken = generateToken(user);
 
     // Return user info (without password) and token
     const { passwordHash, ...userWithoutPassword } = user;
+
+    //update the user with the jwtToken and refreshToken
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { jwtToken: jwtToken, refreshToken: refreshToken },
+    });
     
     res.json({
       message: "Login successful",
@@ -178,7 +185,7 @@ router.get("/profile", authenticateToken, async (req, res) => {
 
 router.patch("/update-profile", authenticateToken, async (req, res) => {
   try {
-    
+
     const { firstName, lastName, location, phone, userAddress } = req.body;
     const user = await prisma.user.update({
       where: { id: req.user.userId },
@@ -193,6 +200,20 @@ router.patch("/update-profile", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+router.post("/logout", authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { jwtToken: null, refreshToken: null },
+    });
+    res.json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+  });
+
 
 
 
