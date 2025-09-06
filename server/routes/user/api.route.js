@@ -42,10 +42,69 @@ router.post("/signup", async (req, res) => {
       });
     }
 
+<<<<<<< HEAD
     // Simulate successful creation
     const fakeUser = { id: Date.now(), email, firstName, lastName };
     const token = generateFakeToken(fakeUser);
     
+=======
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ 
+        error: "User with this email already exists" 
+      });
+    }
+
+    // Hash the password
+    const hashedPassword = await hashPassword(password);
+   
+
+    // Create the user
+    const user = await prisma.user.create({
+      data: {
+        firstName,
+        lastName,
+        email,
+        passwordHash: hashedPassword, // Store hashed password
+        location,
+        phone,
+        userAddress,
+      },
+      // Don't return the password hash in response
+      select: {
+        id: true, 
+        firstName: true,
+        lastName: true,
+        email: true,
+        location: true,
+        phone: true,
+        createdAt: true,
+      }
+    });
+
+    // Generate JWT token
+    const token = generateToken(user);
+    const refreshToken = generateToken(user);
+   
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { jwtToken: token, refreshToken: refreshToken },
+      select: {
+        id: true, 
+        firstName: true,
+        lastName: true,
+        email: true,
+        location: true,
+        phone: true,
+        createdAt: true,
+      }
+    });
+
+>>>>>>> aishwarya
     res.status(201).json({
       message: "Mock user created successfully",
       user: fakeUser,
