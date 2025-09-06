@@ -1,179 +1,119 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
-const { hashPassword, generateToken, comparePassword } = require("../../middleware/auth");
-const { authenticateToken } = require("../../middleware/auth");
-
 const router = express.Router();
-const prisma = new PrismaClient();
+
+// --- We have commented out database and real authentication dependencies ---
+// const { PrismaClient } = require("@prisma/client");
+// const { hashPassword, generateToken, comparePassword } = require("../../middleware/auth");
+// const { authenticateToken } = require("../../middleware/auth");
+// const prisma = new PrismaClient();
+
+
+// --- Mock Helper Functions ---
+
+// 1. A mock function to simulate generating a JWT token
+const generateFakeToken = (user) => {
+  // In a real app, this creates a signed token. Here, it's just a string.
+  return `fake-jwt-token-for-${user.email}`;
+};
+
+// 2. A mock middleware to simulate checking a token
+const authenticateFakeToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token == null) {
+    // No token was sent
+    return res.status(401).json({ error: "Unauthorized: No token provided." });
+  }
+  
+  // For testing, we assume any token is valid and attach a mock user to the request
+  console.log("Mock authentication successful. Attaching mock user.");
+  req.user = { userId: 1, email: 'test@example.com' };
+  next(); // Proceed to the protected route
+};
+
+
+// --- Mock API Routes ---
 
 router.get("/health", (req, res) => {
-  res.json({ status: "OK", message: "Server is healthy" });
+  res.json({ status: "OK", message: "Server is healthy (mock mode)" });
 });
 
-// Signup route - Create new user with hashed password and return JWT token
+// Mock Signup route
 router.post("/signup", async (req, res) => {
-  try {
-    const { firstName, lastName, email, password, location, phone, userAddress } = req.body;
+  console.log("Mock /signup endpoint hit with body:", req.body);
+  const { firstName, lastName, email, password, userAddress } = req.body;
 
-    // Validate required fields
-    if (!email || !password || !userAddress) {
-      return res.status(400).json({ 
-        error: "Email, password, and user address are required" 
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
-
-    if (existingUser) {
-      return res.status(400).json({ 
-        error: "User with this email already exists" 
-      });
-    }
-
-    // Hash the password
-    const hashedPassword = await hashPassword(password);
-   
-
-    // Create the user
-    const user = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        passwordHash: hashedPassword, // Store hashed password
-        location,
-        phone,
-        userAddress,
-      },
-      // Don't return the password hash in response
-      select: {
-        id: true, 
-        firstName: true,
-        lastName: true,
-        email: true,
-        location: true,
-        phone: true,
-        createdAt: true,
-      }
-    });
-
-    // Generate JWT token
-    const token = generateToken(user);
-    const refreshToken = generateToken(user);
-   
-    //i wanna update the user with the jwtToken and refreshToken
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { jwtToken: token, refreshToken: refreshToken },
-      select: {
-        id: true, 
-        firstName: true,
-        lastName: true,
-        email: true,
-        location: true,
-        phone: true,
-        createdAt: true,
-      }
-    });
-  
-
- 
-
-    res.status(201).json({
-      message: "User created successfully",
-      user,
-      token: token, // This is the JWT token the client should store
-    });
-
-  } catch (error) {
-    console.error("Signup error:", error);
-    res.status(500).json({ 
-      error: "Internal server error during signup" 
+  // Basic validation to ensure the frontend is sending the right data
+  if (!email || !password || !firstName || !lastName || !userAddress) {
+    return res.status(400).json({ 
+      error: "Mock Error: All fields (firstName, lastName, email, password, userAddress) are required." 
     });
   }
+
+  // Simulate a successful signup
+  console.log(`Simulating signup for ${email}`);
+  const fakeToken = generateFakeToken({ email });
+  
+  res.status(201).json({
+    message: "Mock user created successfully",
+    token: fakeToken, // Send back the fake token
+  });
 });
 
-// Login route - Verify credentials and return JWT token
+// Mock Login route
 router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  console.log("Mock /login endpoint hit with body:", req.body);
+  const { email, password } = req.body;
 
-    // Validate required fields
-    if (!email || !password) {
-      return res.status(400).json({ 
-        error: "Email and password are required" 
-      });
-    }
+  // Validate that email and password were sent
+  if (!email || !password) {
+    return res.status(400).json({ error: "Mock Error: Email and password are required" });
+  }
 
-    // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email }
-    });
-
-    if (!user) {
-      return res.status(401).json({ 
-        error: "Invalid email or password" 
-      });
-    }
-
-    // Check password
-    const isValidPassword = await comparePassword(password, user.passwordHash);
-
-    if (!isValidPassword) {
-      return res.status(401).json({ 
-        error: "Invalid email or password" 
-      });
-    }
-
-    // Generate JWT token
-    const jwtToken = generateToken(user);
-
-    // Return user info (without password) and token
-    const { passwordHash, ...userWithoutPassword } = user;
+  // Check against hardcoded credentials for a successful login test
+  if (email === "test@example.com" && password === "password123") {
+    console.log("Mock login successful for test@example.com");
+    
+    const mockUser = {
+      id: 1,
+      firstName: "Test",
+      lastName: "User",
+      email: "test@example.com",
+    };
+    
+    const fakeToken = generateFakeToken(mockUser);
     
     res.json({
-      message: "Login successful",
-      user: userWithoutPassword,
-      token: jwtToken,
+      message: "Mock login successful",
+      user: mockUser,
+      token: fakeToken,
     });
-
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ 
-      error: "Internal server error during login" 
-    });
+  } else {
+    // If credentials don't match, send an error
+    console.log(`Mock login failed for email: ${email}`);
+    res.status(401).json({ error: "Mock Error: Invalid email or password" });
   }
 });
 
-// Example protected route - requires authentication
-router.get("/profile", authenticateToken, async (req, res) => {
-  try {
-    // req.user is available because of authenticateToken middleware
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        location: true,
-        phone: true,
-        createdAt: true,
-      }
-    });
+// Mock Protected route
+router.get("/profile", authenticateFakeToken, async (req, res) => {
+  // The 'authenticateFakeToken' middleware runs first.
+  // If it succeeds, 'req.user' will be available here.
+  console.log("Mock /profile endpoint hit for user:", req.user);
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+  // Return a static, hardcoded user profile
+  const mockProfile = {
+    id: req.user.userId,
+    firstName: "Test",
+    lastName: "User",
+    email: req.user.email,
+    location: "Mockville",
+    phone: "555-1234",
+    createdAt: new Date().toISOString(),
+  };
 
-    res.json({ user });
-  } catch (error) {
-    console.error("Profile error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
+  res.json({ user: mockProfile });
 });
 
 module.exports = router;

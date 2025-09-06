@@ -1,13 +1,22 @@
 require('dotenv').config(); // Load environment variables
 const express = require("express");
+const cors = require("cors"); // 1. Import the cors package
 const app = express();
 
 const routes = require("./routes/index.route.js");
 
+// --- Middleware ---
 app.use(express.json());
+app.use(cors()); // 2. Use cors middleware to allow cross-origin requests
+
+// --- Routes ---
+// It's a good practice to prefix your API routes, e.g., app.use("/api", routes);
+// However, using "" will also work.
 app.use("", routes);
 
 const PORT = process.env.PORT || 5001;
+
+// ... (The rest of your file remains exactly the same) ...
 
 // Kill any existing process on this port
 process.on('SIGINT', () => {
