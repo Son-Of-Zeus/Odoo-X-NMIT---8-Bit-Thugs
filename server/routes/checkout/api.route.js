@@ -6,7 +6,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // POST /checkout - Create order from cart items
-router.post("/checkout", authenticateToken, async (req, res) => {
+router.post("/proceed", authenticateToken, async (req, res) => {
   try {
     const { userId } = req.user;
     const { shippingAddress, paymentMethod } = req.body; // Optional additional data
@@ -94,7 +94,7 @@ router.post("/checkout", authenticateToken, async (req, res) => {
 });
 
 // GET /checkout - Get user's purchase history (orders)
-router.get("/checkout", authenticateToken, async (req, res) => {
+router.get("/history", authenticateToken, async (req, res) => {
   try {
     const { userId } = req.user;
 
@@ -193,7 +193,7 @@ router.get("/checkout", authenticateToken, async (req, res) => {
 });
 
 // GET /checkout/:orderId - Get specific order details
-router.get("/checkout/:orderId", authenticateToken, async (req, res) => {
+router.get("/history/:orderId", authenticateToken, async (req, res) => {
   try {
     const { userId } = req.user;
     const orderId = parseInt(req.params.orderId);
