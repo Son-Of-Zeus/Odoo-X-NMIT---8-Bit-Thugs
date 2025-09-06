@@ -18,6 +18,14 @@ EcoFinds is a modern, secure marketplace platform that promotes sustainable cons
 - 📱 **Responsive Design** - Beautiful UI - not responsive cause we did'nt have time ;;
 - 🔍 **Product Categories** - Organized browsing experience with search and category filters
 
+## 🎬 Demo Video
+
+Check out our **Secondhand Marketplace Web App Demo** to see EcoFinds in action!
+
+[![Demo Video](https://img.shields.io/badge/🎬_Watch_Demo-41.8MB-red.svg?style=for-the-badge)](https://drive.google.com/drive/u/3/folders/1rFhS0XXSox2FDtv254tZ9375aDhLgP_v)
+
+> 📹 **Video:** Secondhand Marketplace Web App Demo.mp4 (41.8 MB)
+
 ## 🚀 Quick Start
 
 ### Prerequisites
