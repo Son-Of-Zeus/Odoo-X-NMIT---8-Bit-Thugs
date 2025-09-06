@@ -14,6 +14,7 @@ interface UserProfile {
   avatar: string;
   location: string;
   bio: string;
+  phoneNumber?: string; // phoneNumber field added
 }
 
 interface EditProfileDialogProps {
@@ -39,10 +40,9 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
     
     setIsUploading(true);
     try {
-      // Simulate image upload - in a real app, you'd upload to a service
+      // Simulate image upload
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Create mock URL for the uploaded image
       const newAvatarUrl = URL.createObjectURL(files[0]);
       setFormData(prev => ({
         ...prev,
@@ -65,7 +65,6 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
   };
 
   const handleSave = () => {
-    // Validate required fields
     if (!formData.name.trim()) {
       toast.error("Name is required");
       return;
@@ -76,7 +75,6 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
       return;
     }
     
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error("Please enter a valid email address");
@@ -89,7 +87,6 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
   };
 
   const handleCancel = () => {
-    // Reset form data to original values
     setFormData(userProfile);
     onClose();
   };
@@ -108,9 +105,7 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
           {/* Profile Picture Section */}
           <div className="space-y-4">
             <Label>Profile Picture</Label>
-            
             <div className="flex flex-col items-center space-y-4">
-              {/* Current Profile Picture */}
               <div className="relative">
                 <Avatar className="h-24 w-24">
                   <AvatarImage src={formData.avatar} />
@@ -118,7 +113,6 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
                     {formData.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                
                 {formData.avatar && (
                   <Button
                     variant="destructive"
@@ -130,8 +124,6 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
                   </Button>
                 )}
               </div>
-
-              {/* Simple Upload Button */}
               <div className="flex justify-center">
                 <Button
                   type="button"
@@ -142,9 +134,7 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
                     input.accept = 'image/*';
                     input.onchange = (e) => {
                       const file = (e.target as HTMLInputElement).files?.[0];
-                      if (file) {
-                        handleImageUpload([file]);
-                      }
+                      if (file) handleImageUpload([file]);
                     };
                     input.click();
                   }}
@@ -174,7 +164,6 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
                 placeholder="Enter first name"
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="lastName">Last Name</Label>
               <Input
@@ -201,6 +190,19 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
               onChange={(e) => handleInputChange('email', e.target.value)}
               className="bg-input-background border-border rounded-lg"
               placeholder="Enter email address"
+            />
+          </div>
+
+          {/* Phone Number (Added) */}
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber">Phone Number</Label>
+            <Input
+              id="phoneNumber"
+              type="tel"
+              value={formData.phoneNumber || ""}
+              onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+              className="bg-input-background border-border rounded-lg"
+              placeholder="Enter phone number"
             />
           </div>
 
