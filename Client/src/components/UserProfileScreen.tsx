@@ -1,27 +1,38 @@
+import { useState } from "react";
 import { ArrowLeft, Camera, Edit, MapPin } from "lucide-react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
+import { EditProfileDialog } from "./EditProfileDialog";
+
+interface UserProfile {
+  name: string;
+  email: string;
+  avatar: string;
+  location: string;
+  phoneNumber: string; 
+  bio?: string; // Bio can be optional as it's in the edit dialog
+}
 
 interface UserProfileScreenProps {
   onNavigate: (screen: string) => void;
+  onGoBack: () => void;
+  userProfile: UserProfile;
+  onUpdateProfile: (updatedProfile: UserProfile) => void;
 }
 
-export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
-  // User object updated to include a phone number
+export function UserProfileScreen({ onNavigate, onGoBack, userProfile, onUpdateProfile }: UserProfileScreenProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  // The user object dynamically uses the profile data passed in props
   const user = {
-    name: "Sarah Miller",
-    email: "sarah.miller@email.com",
-    phone: "+1 (555) 123-4567",
-    avatar: "https://images.unsplash.com/photo-1704726135027-9c6f034cfa41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1c2VyJTIwcHJvZmlsZSUyMGF2YXRhcnxlbnwxfHx8fDE3NTcwOTI3MTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    location: "San Francisco, CA",
+    ...userProfile,
     joinDate: "March 2023",
     totalSales: 24,
-    totalPurchases: 18,
+    totalPurchases: 18
   };
 
   return (
@@ -34,15 +45,18 @@ export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => onNavigate("home")}
-                className="rounded-lg mr-4 md:hidden"
+                onClick={onGoBack}
+                className="rounded-lg mr-4"
               >
                 <ArrowLeft size={20} />
               </Button>
               <h1 className="text-lg font-medium">Profile</h1>
             </div>
-            
-            <Button variant="outline" className="rounded-lg">
+            <Button 
+              variant="outline" 
+              className="rounded-lg"
+              onClick={() => setIsEditDialogOpen(true)}
+            >
               <Edit size={16} className="mr-2" />
               Edit
             </Button>
@@ -53,8 +67,8 @@ export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Info Card (Left Column) */}
-          <div className="lg:col-span-1">
+          {/* Left Column: Profile Info & Stats */}
+          <div className="lg:col-span-1 space-y-6">
             <Card className="border-border rounded-xl">
               <CardContent className="p-6 text-center">
                 <div className="relative inline-block mb-4">
@@ -68,82 +82,21 @@ export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
                     size="icon"
                     variant="secondary"
                     className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full border-2 border-background"
+                    onClick={() => setIsEditDialogOpen(true)}
                   >
                     <Camera size={14} />
                   </Button>
                 </div>
-                
                 <h2 className="text-xl font-medium text-foreground mb-1">
                   {user.name}
                 </h2>
-                
-                <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
                   <MapPin size={14} />
                   <span className="text-sm">{user.location}</span>
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Settings & Activity (Right Column) */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Personal Information */}
-            <Card className="border-border rounded-xl">
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      defaultValue="Sarah"
-                      className="bg-input-background border-border rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      defaultValue="Miller"
-                      className="bg-input-background border-border rounded-lg"
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    defaultValue={user.email}
-                    className="bg-input-background border-border rounded-lg"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    defaultValue={user.phone}
-                    className="bg-input-background border-border rounded-lg"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    defaultValue={user.location}
-                    className="bg-input-background border-border rounded-lg"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Activity Stats */}
             <Card className="border-border rounded-xl">
               <CardHeader>
                 <CardTitle className="text-base">Activity</CardTitle>
@@ -170,8 +123,50 @@ export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
                 </div>
               </CardContent>
             </Card>
+          </div>
 
-            {/* Quick Actions */}
+          {/* Right Column: Details & Actions */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="border-border rounded-xl">
+              <CardHeader>
+                <CardTitle>Personal Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>First Name</Label>
+                    <div className="text-sm text-foreground bg-muted rounded-lg px-3 py-2">
+                      {user.name.split(' ')[0]}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Last Name</Label>
+                    <div className="text-sm text-foreground bg-muted rounded-lg px-3 py-2">
+                      {user.name.split(' ').slice(1).join(' ') || 'Not provided'}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <div className="text-sm text-foreground bg-muted rounded-lg px-3 py-2">
+                    {user.email}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <div className="text-sm text-foreground bg-muted rounded-lg px-3 py-2">
+                    {user.phoneNumber || 'Not provided'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Location</Label>
+                  <div className="text-sm text-foreground bg-muted rounded-lg px-3 py-2">
+                    {user.location || 'Not provided'}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="border-border rounded-xl">
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
@@ -194,23 +189,26 @@ export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
               </CardContent>
             </Card>
 
-            {/* Save Changes */}
-            <div className="flex gap-3">
+            <div className="flex justify-center mt-6">
               <Button 
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-8"
+                onClick={() => setIsEditDialogOpen(true)}
               >
-                Save Changes
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1 border-border rounded-lg"
-              >
-                Cancel
+                <Edit size={16} className="mr-2" />
+                Edit Profile
               </Button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Dialog */}
+      <EditProfileDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        userProfile={userProfile}
+        onSave={onUpdateProfile}
+      />
     </div>
   );
 }

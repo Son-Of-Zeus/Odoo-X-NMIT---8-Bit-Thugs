@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Filter, Grid, List } from "lucide-react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { Plus, Sun, Moon } from "lucide-react";
 import { Button } from "./ui/button";
 import { ProductCard } from "./ProductCard";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
@@ -9,12 +9,16 @@ interface Product {
   title: string;
   price: number;
   category: string;
-  image: string;
+  images: string[];
   condition?: string;
 }
 
 interface ProductListingFeedProps {
   onNavigate: (screen: string, productId?: string) => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
+  savedItemIds?: string[];
+  onToggleSave?: (productId: string) => void;
 }
 
 // Mock data for products
@@ -24,15 +28,22 @@ const mockProducts: Product[] = [
     title: "Vintage Oak Coffee Table",
     price: 125,
     category: "Home",
-    image: "https://images.unsplash.com/photo-1577176434922-803273eba97a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwZnVybml0dXJlJTIwc2Vjb25kaGFuZHxlbnwxfHx8fDE3NTcxMjg0NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    condition: "Good"
+    images: [
+      "https://images.unsplash.com/photo-1577176434922-803273eba97a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwZnVybml0dXJlJTIwc2Vjb25kaGFuZHxlbnwxfHx8fDE3NTcxMjg0NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b29kJTIwdGFibGUlMjBmdXJuaXR1cmV8ZW58MXx8fHwxNzU3MTI4NDU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmdXJuaXR1cmUlMjBkZXRhaWx8ZW58MXx8fHwxNzU3MTI4NDU2fDA&ixlib=rb-4.1.0&q=80&w=1080"
+    ],
+    condition: "Like-New"
   },
   {
     id: "2",
     title: "Sustainable Cotton Jacket",
     price: 45,
     category: "Clothing",
-    image: "https://images.unsplash.com/photo-1750343293522-2f08b60a317a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1c2VkJTIwY2xvdGhpbmclMjBzdXN0YWluYWJsZSUyMGZhc2hpb258ZW58MXx8fHwxNzU3MTI4NDU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+    images: [
+      "https://images.unsplash.com/photo-1750343293522-2f08b60a317a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1c2VkJTIwY2xvdGhpbmclMjBzdXN0YWluYWJsZSUyMGZhc2hpb258ZW58MXx8fHwxNzU3MTI4NDU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjbG90aGluZyUyMGphY2tldHxlbnwxfHx8fDE3NTcxMjg0NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080"
+    ],
     condition: "Excellent"
   },
   {
@@ -40,7 +51,10 @@ const mockProducts: Product[] = [
     title: "Classic Literature Collection",
     price: 30,
     category: "Books",
-    image: "https://images.unsplash.com/photo-1657211689102-0ec23b523fa0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzZWNvbmRoYW5kJTIwYm9va3N8ZW58MXx8fHwxNzU3MTI4NDU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+    images: [
+      "https://images.unsplash.com/photo-1657211689102-0ec23b523fa0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzZWNvbmRoYW5kJTIwYm9va3N8ZW58MXx8fHwxNzU3MTI4NDU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "https://images.unsplash.com/photo-1544947950-fa07a98d237f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxib29rcyUyMHN0YWNrfGVufDF8fHx8MTc1NzEyODQ1Nnww&ixlib=rb-4.1.0&q=80&w=1080"
+    ],
     condition: "Good"
   },
   {
@@ -48,38 +62,89 @@ const mockProducts: Product[] = [
     title: "Refurbished Bluetooth Speaker",
     price: 85,
     category: "Electronics",
-    image: "https://images.unsplash.com/photo-1743741031690-9b4358532806?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwZWxlY3Ryb25pY3MlMjBnYWRnZXRzfGVufDF8fHx8MTc1NzEyODEyM3ww&ixlib=rb-4.1.0&q=80&w=1080",
-    condition: "Like New"
+    images: [
+      "https://images.unsplash.com/photo-1743741031690-9b4358532806?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwZWxlY3Ryb25pY3MlMjBnYWRnZXRzfGVufDF8fHx8MTc1NzEyODEyM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzcGVha2VyJTIwZWxlY3Ryb25pY3N8ZW58MXx8fHwxNzU3MTI4NDU2fDA&ixlib=rb-4.1.0&q=80&w=1080"
+    ],
+    condition: "Fair"
   },
   {
     id: "5",
     title: "Handmade Ceramic Vase",
     price: 22,
     category: "Home",
-    image: "https://images.unsplash.com/photo-1577176434922-803273eba97a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwZnVybml0dXJlJTIwc2Vjb25kaGFuZHxlbnwxfHx8fDE3NTcxMjg0NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    condition: "Excellent"
+    images: [
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjZXJhbWljJTIwdmFzZXxlbnwxfHx8fDE3NTcxMjg0NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "https://images.unsplash.com/photo-1599582909645-9754ae5a888e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjZXJhbWljJTIwcG90dGVyeXxlbnwxfHx8fDE3NTcxMjg0NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080"
+    ],
+    condition: "Like-New"
   },
   {
     id: "6",
     title: "Organic Cotton T-Shirt",
     price: 18,
     category: "Clothing",
-    image: "https://images.unsplash.com/photo-1750343293522-2f08b60a317a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1c2VkJTIwY2xvdGhpbmclMjBzdXN0YWluYWJsZSUyMGZhc2hpb258ZW58MXx8fHwxNzU3MTI4NDU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    condition: "Good"
+    images: [
+      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjbG90aGluZyUyMGphY2tldHxlbnwxfHx8fDE3NTcxMjg0NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "https://images.unsplash.com/photo-1562157873-818bc0726f68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0c2hpcnQlMjBjbG90aGluZ3xlbnwxfHx8fDE3NTcxMjg0NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080"
+    ],
+    condition: "Poor"
   }
 ];
 
-export function ProductListingFeed({ onNavigate }: ProductListingFeedProps) {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+export const ProductListingFeed = forwardRef<
+  { handleSearch: (query: string) => void; handleFilter: (condition: string) => void },
+  ProductListingFeedProps
+>(({ onNavigate, isDarkMode = false, onToggleDarkMode, savedItemIds = [], onToggleSave }, ref) => {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCondition, setFilterCondition] = useState("all");
+  const [filteredProducts, setFilteredProducts] = useState(mockProducts);
 
-  const filteredProducts = selectedCategory === "all" 
-    ? mockProducts 
-    : mockProducts.filter(product => product.category.toLowerCase() === selectedCategory.toLowerCase());
+  useEffect(() => {
+    let products = mockProducts;
+
+    // Filter by category
+    if (selectedCategory !== "all") {
+      products = products.filter(product => 
+        product.category.toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      products = products.filter(product =>
+        product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by condition
+    if (filterCondition !== "all") {
+      products = products.filter(product =>
+        product.condition?.toLowerCase() === filterCondition.toLowerCase()
+      );
+    }
+
+    setFilteredProducts(products);
+  }, [selectedCategory, searchQuery, filterCondition]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleFilter = (condition: string) => {
+    setFilterCondition(condition);
+  };
+
+  useImperativeHandle(ref, () => ({
+    handleSearch,
+    handleFilter,
+  }));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* Category Tabs */}
+      {/* Category Tabs and Dark Mode Toggle */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full sm:w-auto">
           <TabsList className="grid w-full sm:w-auto grid-cols-3 sm:grid-cols-5 bg-muted rounded-lg">
@@ -91,45 +156,35 @@ export function ProductListingFeed({ onNavigate }: ProductListingFeedProps) {
           </TabsList>
         </Tabs>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="rounded-lg">
-            <Filter size={18} />
-          </Button>
-          <div className="flex bg-muted rounded-lg p-1">
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setViewMode("grid")}
-              className="rounded-md h-8 w-8"
-            >
-              <Grid size={16} />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setViewMode("list")}
-              className="rounded-md h-8 w-8"
-            >
-              <List size={16} />
-            </Button>
-          </div>
-        </div>
+        {/* Dark Mode Toggle */}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={onToggleDarkMode}
+          className="rounded-lg border-border hover:bg-accent"
+        >
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </Button>
       </div>
 
       {/* Products Grid */}
-      <div className={`grid gap-6 ${
-        viewMode === "grid" 
-          ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
-          : "grid-cols-1"
-      }`}>
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filteredProducts.map((product) => (
           <ProductCard
             key={product.id}
             product={product}
             onClick={() => onNavigate("product-detail", product.id)}
+            isSaved={savedItemIds.includes(product.id)}
+            onToggleSave={() => onToggleSave?.(product.id)}
           />
         ))}
       </div>
+
+      {filteredProducts.length === 0 && (
+        <div className="text-center py-16">
+          <p className="text-muted-foreground">No products found matching your criteria.</p>
+        </div>
+      )}
 
       {/* Floating Add Button */}
       <Button
@@ -141,4 +196,4 @@ export function ProductListingFeed({ onNavigate }: ProductListingFeedProps) {
       </Button>
     </div>
   );
-}
+});
