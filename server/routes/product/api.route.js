@@ -77,7 +77,7 @@ router.get("/read-products", authenticateToken, async (req, res) => {
   }
 });
 
-router.patch("/update-product/:productId", authenticateToken, async (req, res) => {
+router.post("/update-product/:productId", authenticateToken, async (req, res) => {
   try {
     // User should be only allowed to update the product if it belongs to them   
     const { productId } = req.params;

@@ -179,14 +179,15 @@ router.get("/profile", authenticateToken, async (req, res) => {
   }
 });
 
-router.patch("/update-profile", authenticateToken, async (req, res) => {
+router.post("/update-profile", authenticateToken, async (req, res) => {
   try {
-
+    console.log("Update profile route hit");
     const { firstName, lastName, location, phone, userAddress } = req.body;
     const user = await prisma.user.update({
       where: { id: req.user.userId },
       data: { firstName, lastName, location, phone, userAddress },
     });
+    console.log("User updated successfully");
     res.json({ 
       message: "Profile updated successfully",
       user: user,
