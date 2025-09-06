@@ -1,27 +1,55 @@
 import { useState } from "react";
-import { ArrowLeft, Plus, Upload } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { ImageUpload } from "./ImageUpload";
+import { toast } from "sonner@2.0.3";
+
+interface UploadedImage {
+  id: string;
+  file: File;
+  preview: string;
+  name: string;
+  size: number;
+}
 
 interface AddProductScreenProps {
   onNavigate: (screen: string) => void;
+  onGoBack: () => void;
 }
 
-export function AddProductScreen({ onNavigate }: AddProductScreenProps) {
+export function AddProductScreen({ onNavigate, onGoBack }: AddProductScreenProps) {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [condition, setCondition] = useState("");
+  const [images, setImages] = useState<UploadedImage[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!title || !category || !price || !condition) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    if (images.length === 0) {
+      toast.error("Please add at least one image");
+      return;
+    }
+
     // Here you would normally save the product
+    toast.success("Product listed successfully!");
     onNavigate("my-listings");
+  };
+
+  const handleImagesChange = (uploadedImages: UploadedImage[]) => {
+    setImages(uploadedImages);
   };
 
   return (
@@ -33,7 +61,7 @@ export function AddProductScreen({ onNavigate }: AddProductScreenProps) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onNavigate("home")}
+              onClick={onGoBack}
               className="rounded-lg mr-4"
             >
               <ArrowLeft size={20} />
@@ -52,21 +80,11 @@ export function AddProductScreen({ onNavigate }: AddProductScreenProps) {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Image Upload */}
-              <div className="space-y-2">
-                <Label>Product Images</Label>
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <div className="mt-4">
-                    <Button type="button" variant="outline" className="rounded-lg">
-                      <Plus size={16} className="mr-2" />
-                      Add Images
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Upload up to 5 images. First image will be the cover.
-                  </p>
-                </div>
-              </div>
+              <ImageUpload
+                onImagesChange={handleImagesChange}
+                maxImages={5}
+                maxSizeMB={5}
+              />
 
               {/* Product Title */}
               <div className="space-y-2">

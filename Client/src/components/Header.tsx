@@ -1,4 +1,4 @@
-import { Search, Menu, ShoppingCart, User } from "lucide-react";
+import { Search, Menu, ShoppingCart, User, Filter } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Logo } from "./Logo";
@@ -8,9 +8,12 @@ interface HeaderProps {
   currentScreen: string;
   onNavigate: (screen: string) => void;
   cartCount?: number;
+  isLoggedIn?: boolean;
+  onSearch?: (query: string) => void;
+  onFilter?: (condition: string) => void;
 }
 
-export function Header({ currentScreen, onNavigate, cartCount = 0 }: HeaderProps) {
+export function Header({ currentScreen, onNavigate, cartCount = 0, isLoggedIn = false, onSearch, onFilter }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,37 +30,41 @@ export function Header({ currentScreen, onNavigate, cartCount = 0 }: HeaderProps
               <Input
                 placeholder="Search sustainable products..."
                 className="pl-10 bg-input-background border-border rounded-lg"
+                onChange={(e) => onSearch?.(e.target.value)}
               />
             </div>
-            <Select>
+            <Select onValueChange={(value) => onFilter?.(value)}>
               <SelectTrigger className="w-40 bg-input-background border-border rounded-lg">
-                <SelectValue placeholder="Category" />
+                <SelectValue placeholder="Filter" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="clothing">Clothing</SelectItem>
-                <SelectItem value="books">Books</SelectItem>
-                <SelectItem value="electronics">Electronics</SelectItem>
-                <SelectItem value="home">Home & Garden</SelectItem>
+                <SelectItem value="all">All Conditions</SelectItem>
+                <SelectItem value="like-new">Like New</SelectItem>
+                <SelectItem value="excellent">Excellent</SelectItem>
+                <SelectItem value="good">Good</SelectItem>
+                <SelectItem value="fair">Fair</SelectItem>
+                <SelectItem value="poor">Poor</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Navigation Icons */}
           <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onNavigate("cart")}
-              className="relative rounded-lg"
-            >
-              <ShoppingCart size={20} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Button>
+            {isLoggedIn && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onNavigate("cart")}
+                className="relative rounded-lg"
+              >
+                <ShoppingCart size={20} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Button>
+            )}
             
             <Button
               variant="ghost"
@@ -81,12 +88,28 @@ export function Header({ currentScreen, onNavigate, cartCount = 0 }: HeaderProps
 
         {/* Mobile Search */}
         <div className="md:hidden pb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input
-              placeholder="Search products..."
-              className="pl-10 bg-input-background border-border rounded-lg"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+              <Input
+                placeholder="Search products..."
+                className="pl-10 bg-input-background border-border rounded-lg"
+                onChange={(e) => onSearch?.(e.target.value)}
+              />
+            </div>
+            <Select onValueChange={(value) => onFilter?.(value)}>
+              <SelectTrigger className="w-24 bg-input-background border-border rounded-lg">
+                <Filter size={16} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Conditions</SelectItem>
+                <SelectItem value="like-new">Like New</SelectItem>
+                <SelectItem value="excellent">Excellent</SelectItem>
+                <SelectItem value="good">Good</SelectItem>
+                <SelectItem value="fair">Fair</SelectItem>
+                <SelectItem value="poor">Poor</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

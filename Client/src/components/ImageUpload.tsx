@@ -15,10 +15,26 @@ interface ImageUploadProps {
   onImagesChange: (images: UploadedImage[]) => void;
   maxImages?: number;
   maxSizeMB?: number;
+  initialImages?: UploadedImage[];
+  label?: string;
+  buttonText?: string;
+  addMoreText?: string;
+  dragText?: string;
+  className?: string;
 }
 
-export function ImageUpload({ onImagesChange, maxImages = 5, maxSizeMB = 5 }: ImageUploadProps) {
-  const [images, setImages] = useState<UploadedImage[]>([]);
+export function ImageUpload({ 
+  onImagesChange, 
+  maxImages = 5, 
+  maxSizeMB = 5, 
+  initialImages = [],
+  label = "Product Images",
+  buttonText = "Choose Images",
+  addMoreText = "Add More Images",
+  dragText = "Drag and drop images here, or click to select",
+  className = ""
+}: ImageUploadProps) {
+  const [images, setImages] = useState<UploadedImage[]>(initialImages);
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,9 +46,9 @@ export function ImageUpload({ onImagesChange, maxImages = 5, maxSizeMB = 5 }: Im
     }
 
     // Check file size
-    const maxSizeBytes = maxSizeGB * 1024 * 1024;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      return `File size must be less than ${maxSizeGB}MB`;
+      return `File size must be less than ${maxSizeMB}MB`;
     }
 
     return null;
@@ -83,7 +99,7 @@ export function ImageUpload({ onImagesChange, maxImages = 5, maxSizeMB = 5 }: Im
       };
       reader.readAsDataURL(file);
     });
-  }, [images, maxImages, maxSizeGB, onImagesChange]);
+  }, [images, maxImages, maxSizeMB, onImagesChange]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -127,8 +143,8 @@ export function ImageUpload({ onImagesChange, maxImages = 5, maxSizeMB = 5 }: Im
   };
 
   return (
-    <div className="space-y-4">
-      <Label>Product Images {images.length > 0 && `(${images.length}/${maxImages})`}</Label>
+    <div className={`space-y-4 ${className}`}>
+      <Label>{label} {images.length > 0 && `(${images.length}/${maxImages})`}</Label>
       
       {/* Upload Area */}
       <div
@@ -155,12 +171,12 @@ export function ImageUpload({ onImagesChange, maxImages = 5, maxSizeMB = 5 }: Im
                 className="rounded-lg"
               >
                 <Plus size={16} className="mr-2" />
-                Choose Images
+                {buttonText}
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              Drag and drop images here, or click to select<br />
-              Up to {maxImages} images, max {maxSizeGB}MB each
+              {dragText}<br />
+              Up to {maxImages} image{maxImages !== 1 ? 's' : ''}, max {maxSizeMB}MB each
             </p>
           </div>
         ) : (
@@ -177,7 +193,7 @@ export function ImageUpload({ onImagesChange, maxImages = 5, maxSizeMB = 5 }: Im
                 className="rounded-lg"
               >
                 <Plus size={16} className="mr-2" />
-                Add More Images
+                {addMoreText}
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">

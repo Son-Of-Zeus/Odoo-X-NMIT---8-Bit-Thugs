@@ -5,17 +5,26 @@ import { Card, CardContent } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Separator } from "./ui/separator";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { toast } from "sonner@2.0.3";
+import { useMemo } from "react";
 
 interface ProductDetailScreenProps {
   onNavigate: (screen: string) => void;
   onAddToCart: () => void;
+  onGoBack: () => void;
+  isSaved?: boolean;
+  onToggleSave?: () => void;
 }
 
-// Mock product data updated to remove seller rating
-const mockProduct = {
+// Function to generate a random price in a given range
+const getRandomPrice = (min: number, max: number) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+// Mock product data (price is now handled dynamically)
+const mockProductData = {
   id: "1",
   title: "Vintage Oak Coffee Table",
-  price: 2, 
   category: "Home",
   condition: "Good",
   description: "Beautiful vintage oak coffee table with a rich, warm finish. This piece has been well-maintained and shows minimal wear. Perfect for adding character to any living room. Dimensions: 48\" L x 24\" W x 16\" H. Some minor scratches on the surface that add to its vintage charm.",
@@ -24,19 +33,27 @@ const mockProduct = {
   ],
   seller: {
     name: "Sarah M.",
-    avatar: "https://images.unsplash.com/photo-1704726135027-9c6f034cfa41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1c2VyJTIwcHJvZmlsZSUyMGF2YXRhcnxlbnwxfHx8fDE3NTcwOTI3MTB8MA&ixlib-rb-4.1.0&q=80&w=1080",
+    avatar: "https://images.unsplash.com/photo-1704726135027-9c6f034cfa41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1c2VyJTIwcHJvZmlsZSUyMGF2YXRhcnxlbnwxfHx8fDE3NTcwOTI3MTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
     location: "San Francisco, CA"
   },
   posted: "3 days ago"
 };
 
-export function ProductDetailScreen({ onNavigate, onAddToCart }: ProductDetailScreenProps) {
-  const INR_CONVERSION_RATE = 83;
-  const priceInInr = mockProduct.price * INR_CONVERSION_RATE;
+export function ProductDetailScreen({ onNavigate, onAddToCart, onGoBack, isSaved, onToggleSave }: ProductDetailScreenProps) {
+  
+  // Use useMemo to generate the price once per component mount
+  const productPrice = useMemo(() => getRandomPrice(100, 500), []);
+
+  const mockProduct = { ...mockProductData, price: productPrice };
 
   const handleAddToCart = () => {
     onAddToCart();
-    // Could show a toast notification here
+    toast.success("Added to cart!");
+  };
+
+  const handleToggleSave = () => {
+    onToggleSave?.();
+    toast.success(isSaved ? "Removed from saved items" : "Added to saved items");
   };
 
   return (
@@ -48,16 +65,25 @@ export function ProductDetailScreen({ onNavigate, onAddToCart }: ProductDetailSc
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onNavigate("home")}
+              onClick={onGoBack}
               className="rounded-lg"
             >
               <ArrowLeft size={20} />
             </Button>
-            
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="rounded-lg">
-                <Heart size={20} />
-              </Button>
+              {onToggleSave && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="rounded-lg"
+                  onClick={handleToggleSave}
+                >
+                  <Heart 
+                    size={20} 
+                    className={`transition-colors ${isSaved ? 'text-primary fill-current' : 'text-muted-foreground'}`} 
+                  />
+                </Button>
+              )}
               <Button variant="ghost" size="icon" className="rounded-lg">
                 <Share2 size={20} />
               </Button>
@@ -91,15 +117,12 @@ export function ProductDetailScreen({ onNavigate, onAddToCart }: ProductDetailSc
                   {mockProduct.condition}
                 </Badge>
               </div>
-              
               <h1 className="text-2xl font-medium text-foreground mb-2">
                 {mockProduct.title}
               </h1>
-              
               <div className="text-3xl font-semibold text-primary mb-4">
-                ₹{priceInInr.toLocaleString('en-IN')}
+                ₹{mockProduct.price}
               </div>
-              
               <p className="text-muted-foreground leading-relaxed">
                 {mockProduct.description}
               </p>

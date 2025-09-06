@@ -18,9 +18,10 @@ interface CartScreenProps {
   cartItems: CartItem[];
   onUpdateQuantity: (id: string, quantity: number) => void;
   onRemoveItem: (id: string) => void;
+  onGoBack: () => void;
 }
 
-export function CartScreen({ onNavigate, cartItems, onUpdateQuantity, onRemoveItem }: CartScreenProps) {
+export function CartScreen({ onNavigate, cartItems, onUpdateQuantity, onRemoveItem, onGoBack }: CartScreenProps) {
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shipping = 5.99;
   const total = subtotal + shipping;
@@ -34,7 +35,7 @@ export function CartScreen({ onNavigate, cartItems, onUpdateQuantity, onRemoveIt
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onNavigate("home")}
+              onClick={onGoBack}
               className="rounded-lg mr-4"
             >
               <ArrowLeft size={20} />

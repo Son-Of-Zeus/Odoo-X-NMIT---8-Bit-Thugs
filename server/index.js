@@ -1,14 +1,19 @@
 require('dotenv').config(); // Load environment variables
 const express = require("express");
 <<<<<<< HEAD
+<<<<<<< HEAD
 const cors = require("cors"); // 1. Import the cors package
 =======
 const cors = require("cors");
 >>>>>>> aishwarya
+=======
+const cors = require("cors"); // 1. Import the cors package
+>>>>>>> main
 const app = express();
 
 const routes = require("./routes/index.route.js");
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 // --- Middleware ---
 =======
@@ -49,6 +54,17 @@ app.use(cors()); // 2. Use cors middleware to allow cross-origin requests
 // --- Routes ---
 // It's a good practice to prefix your API routes, e.g., app.use("/api", routes);
 // However, using "" will also work.
+=======
+// --- Middleware ---
+app.use(express.json());
+
+// 2. Use the cors middleware to allow cross-origin requests
+// This will enable CORS for all routes and all origins by default.
+app.use(cors());
+
+// --- Routes ---
+// This line must come AFTER you have used the cors middleware.
+>>>>>>> main
 app.use("", routes);
 
 const PORT = process.env.PORT || 5001;
