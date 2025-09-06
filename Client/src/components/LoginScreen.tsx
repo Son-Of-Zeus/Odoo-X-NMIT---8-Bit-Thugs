@@ -5,8 +5,9 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Logo } from "./Logo";
-// For demonstration of hashing, you would install and import bcryptjs
-// import bcrypt from 'bcryptjs';
+
+// The URL where your backend server is running
+const API_URL = "https://toolbar-starring-difficult-dreams.trycloudflare.com"; // Make sure this port matches your Express server
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -14,56 +15,80 @@ interface LoginScreenProps {
 }
 
 export function LoginScreen({ onLogin, onNavigate }: LoginScreenProps) {
+  // State for all form inputs
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [userAddress, setUserAddress] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  
+  // State for UI control
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); // Reset error on new submission
+    setError("");
+    setIsLoading(true);
 
-    // Logic for new user sign-up
-    if (isSignUp) {
-      if (password !== confirmPassword) {
-        setError("Passwords do not match.");
-        return;
-      }
-
-      // Best Practice: Password hashing should be done on the backend.
-      // Send the plain password over HTTPS to your server, which then
-      // hashes it before storing it.
-      console.log("New user data for submission:");
-      console.log(`Email: ${email}`);
-      console.log(`Phone Number: ${phoneNumber}`);
-      console.log("Password would be sent to the backend for hashing.");
-      
-      // Example API call to backend for user creation:
-      // await fetch('/api/signup', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, phoneNumber, password }),
-      // });
+    if (isSignUp && password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setIsLoading(false);
+      return;
     }
 
-    // After successful sign-up or for sign-in, call onLogin
-    onLogin();
+    const endpoint = isSignUp ? `${API_URL}/user/signup` : `${API_URL}/user/login`;
+    
+    const body = isSignUp
+      ? { email, password, firstName, lastName, userAddress, phone: phoneNumber }
+      : { email, password };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'An unexpected error occurred.');
+      }
+
+      // --- API Call Success ---
+      console.log("API Success:", data);
+      
+      // Store the token in the browser's local storage
+      localStorage.setItem('authToken', data.token);
+      
+      // Notify the parent component (App.tsx) that login was successful
+      onLogin();
+
+    } catch (err: any) {
+      console.error("API Error:", err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Toggles between Sign In and Sign Up forms
+  const toggleForm = () => {
+    setIsSignUp(!isSignUp);
+    setError(""); // Clear errors when switching forms
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header with back button and dynamic title */}
+      {/* Header with back button */}
       <div className="border-b border-border bg-background/95 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onNavigate("home")}
-              className="rounded-lg mr-4"
-            >
+            <Button variant="ghost" size="icon" onClick={() => onNavigate("home")} className="rounded-lg mr-4">
               <ArrowLeft size={20} />
             </Button>
             <h1 className="text-lg font-medium">
@@ -80,91 +105,67 @@ export function LoginScreen({ onLogin, onNavigate }: LoginScreenProps) {
             <Logo size="lg" className="justify-center" />
             <div>
               <h1 className="text-xl font-medium text-foreground">
-                {isSignUp ? "Create Account" : "Welcome Back"}
+                {isSignUp ? "Create Your Account" : "Welcome Back"}
               </h1>
               <p className="text-muted-foreground mt-2">
-                {isSignUp 
-                  ? "Join our sustainable marketplace" 
-                  : "Sign in to your account"
-                }
+                {isSignUp ? "Join our sustainable marketplace" : "Sign in to your account"}
               </p>
             </div>
           </CardHeader>
           
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-input-background border-border rounded-lg"
-                  required
-                />
-              </div>
-
+              {/* --- NEW FIELDS FOR SIGN UP --- */}
               {isSignUp && (
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="bg-input-background border-border rounded-lg"
-                    required
-                  />
-                </div>
+                <>
+                  <div className="flex gap-4">
+                    <div className="space-y-2 w-1/2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2 w-1/2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="userAddress">Address</Label>
+                    <Input id="userAddress" value={userAddress} onChange={(e) => setUserAddress(e.target.value)} required />
+                  </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number (Optional)</Label>
+                    <Input id="phone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+                  </div>
+                </>
               )}
               
               <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-input-background border-border rounded-lg"
-                  required
-                />
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
               </div>
 
               {isSignUp && (
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="bg-input-background border-border rounded-lg"
-                    required
-                  />
+                  <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
                 </div>
               )}
               
-              {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+              {error && <p className="text-sm text-red-500 text-center font-medium">{error}</p>}
               
-              <Button 
-                type="submit" 
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
-              >
-                {isSignUp ? "Create Account" : "Sign In"}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Processing...' : (isSignUp ? "Create Account" : "Sign In")}
               </Button>
               
-              <p className="text-center text-muted-foreground">
-                {isSignUp ? "Already have an account? " : "Don't have an account? "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSignUp(!isSignUp);
-                    setError(""); // Clear errors when switching form
-                  }}
-                  className="text-primary hover:text-primary/80 font-medium"
-                >
-                  {isSignUp ? "Sign in" : "Sign up"}
+              <p className="text-center text-sm text-muted-foreground">
+                {isSignUp ? "Already have an account?" : "Don't have an account?"}
+                <button type="button" onClick={toggleForm} className="ml-1 text-primary hover:underline font-medium">
+                  {isSignUp ? "Sign In" : "Sign Up"}
                 </button>
               </p>
             </form>
