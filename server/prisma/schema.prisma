@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int       @id @default(autoincrement())
+  firstName         String?   @map("first_name") @db.VarChar(256)
+  lastName          String?   @map("last_name") @db.VarChar(256)
+  email             String    @unique @db.VarChar(256)
+  location          String?   @db.VarChar(256)
+  passwordHash      String    @map("password_hash") @db.VarChar(256)
+  profilePictureUrl String?   @map("profile_picture_url") @db.Text
+  userAddress       String    @map("user_address") @db.Text
+  phone             String?   @db.VarChar(20)
+  createdAt         DateTime  @default(now()) @db.Timestamptz(6)
+  jwtToken          String?   @map("jwt_token") @db.VarChar(256)
+  refreshToken      String?   @map("refresh_token") @db.VarChar(256)
+
+  // Relations
+  products   Product[]
+  cartItems  CartItem[]
+  orders     Order[]
+
+  @@map("users")
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(255)
+
+  // Relations
+  products Product[]
+
+  @@map("categories")
+}
+
+model Condition {
+  id          Int    @id @default(autoincrement())
+  description String @unique @db.VarChar(255)
+
+  // Relations
+  products Product[]
+
+  @@map("conditions")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(10, 2)
+  categoryId  Int?     @map("category_id")
+  conditionId Int?     @map("condition_id")
+  imageUrls   String[] @map("image_urls") @db.Text
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  Category?   @relation(fields: [categoryId], references: [id])
+  condition Condition?  @relation(fields: [conditionId], references: [id])
+  cartItems CartItem[]
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model CartItem {
+  id        Int @id @default(autoincrement())
+  userId    Int @map("user_id")
+  productId Int @map("product_id")
+  quantity  Int @default(1)
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  totalPrice Decimal  @map("total_price") @db.Decimal(10, 2)
+  orderDate  DateTime @default(now()) @map("order_date") @db.Timestamptz(6)
+
+  // Relations
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id              Int     @id @default(autoincrement())
+  orderId         Int     @map("order_id")
+  productId       Int     @map("product_id")
+  quantity        Int
+  priceAtPurchase Decimal @map("price_at_purchase") @db.Decimal(10, 2)
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
