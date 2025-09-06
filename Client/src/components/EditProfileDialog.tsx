@@ -28,8 +28,8 @@ interface EditProfileDialogProps {
   onSave: (updatedProfile: UserProfile) => void;
 }
 
-// It's best practice to define this in a central place or use environment variables
-const API_URL = "https://toolbar-starring-difficult-dreams.trycloudflare.com";
+// Ensure you have this in your .env file
+const API_URL ="https://toolbar-starring-difficult-dreams.trycloudflare.com";
 
 export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: EditProfileDialogProps) {
   const [formData, setFormData] = useState({
@@ -65,15 +65,11 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
   };
 
   const handleImageUpload = async (file: File) => {
-    // This is a placeholder for image upload logic.
-    // In a real app, you would upload the file to a service (like S3, Cloudinary)
-    // and get back a URL to save in the database.
     const newAvatarUrl = URL.createObjectURL(file);
     setFormData(prev => ({ ...prev, profilePictureUrl: newAvatarUrl }));
     toast.info("Image staged for upload. Click 'Save Changes' to confirm.");
   };
 
-  // --- THIS IS THE UPDATED FUNCTION ---
   const handleSave = async () => {
     if (!formData.firstName.trim()) {
       toast.error("First Name is required");
@@ -89,18 +85,17 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
     setIsSaving(true);
 
     try {
-      // Send only the fields that can be updated to the backend
       const updatePayload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         userAddress: formData.userAddress,
         phone: formData.phone,
         location: formData.location,
-        // profilePictureUrl would be handled here if you have an upload service
       };
 
-      const response = await fetch(`${API_URL}/user/profile`, {
-        method: 'PATCH',
+      // --- THIS IS THE CORRECTED FETCH CALL ---
+      const response = await fetch(`${API_URL}/user/update-profile`, { // Corrected URL
+        method: 'POST', // Corrected Method
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -108,13 +103,18 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
         body: JSON.stringify(updatePayload),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
-        throw new Error(result.error || "Failed to update profile.");
+        let errorMsg = `Request failed: ${response.statusText}`;
+        try {
+            const errorResult = await response.json();
+            errorMsg = errorResult.error || errorMsg;
+        } catch (e) {
+            // Response was not JSON, stick with the status text
+        }
+        throw new Error(errorMsg);
       }
 
-      // On success, pass the updated user data from the server back to the parent
+      const result = await response.json();
       onSave(result.user);
       toast.success("Profile updated successfully!");
       onClose();
@@ -164,7 +164,7 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
             />
           </div>
 
-          {/* Name Fields */}
+          {/* Form Fields */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name *</Label>
@@ -187,8 +187,6 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
               />
             </div>
           </div>
-
-          {/* Email (Read-only) */}
           <div className="space-y-2">
             <Label htmlFor="email">Email Address</Label>
             <Input
@@ -199,8 +197,6 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
               readOnly
             />
           </div>
-
-          {/* Phone Number */}
           <div className="space-y-2">
             <Label htmlFor="phone">Phone Number</Label>
             <Input
@@ -212,8 +208,6 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
               className="bg-input-background border-border rounded-lg"
             />
           </div>
-          
-           {/* Address */}
           <div className="space-y-2">
             <Label htmlFor="userAddress">Address</Label>
             <Input
@@ -226,6 +220,7 @@ export function EditProfileDialog({ isOpen, onClose, userProfile, onSave }: Edit
           </div>
         </div>
 
+        {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-4">
           <Button variant="outline" onClick={onClose} className="flex-1" disabled={isSaving}>
             Cancel
