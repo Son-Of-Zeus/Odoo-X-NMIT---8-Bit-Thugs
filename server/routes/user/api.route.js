@@ -176,4 +176,24 @@ router.get("/profile", authenticateToken, async (req, res) => {
   }
 });
 
+router.patch("/update-profile", authenticateToken, async (req, res) => {
+  try {
+    
+    const { firstName, lastName, location, phone, userAddress } = req.body;
+    const user = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { firstName, lastName, location, phone, userAddress },
+    });
+    res.json({ 
+      message: "Profile updated successfully",
+      user: user,
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
 module.exports = router;
