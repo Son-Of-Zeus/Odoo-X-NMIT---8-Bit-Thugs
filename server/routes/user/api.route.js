@@ -1,178 +1,165 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
-const { hashPassword, generateToken, comparePassword } = require("../../middleware/auth");
-const { authenticateToken } = require("../../middleware/auth");
+const { hashPassword, generateToken, comparePassword, authenticateToken } = require("../../middleware/auth"); // Assuming all auth functions are in one file
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-router.get("/health", (req, res) => {
-  res.json({ status: "OK", message: "Server is healthy" });
-});
+// --- Live API Routes ---
 
-// Signup route - Create new user with hashed password and return JWT token
+// SIGNUP: Create a new user in the database
 router.post("/signup", async (req, res) => {
   try {
-    const { firstName, lastName, email, password, location, phone, userAddress } = req.body;
+    const { firstName, lastName, email, password, userAddress, phone } = req.body;
 
     // Validate required fields
-    if (!email || !password || !userAddress) {
-      return res.status(400).json({ 
-        error: "Email, password, and user address are required" 
-      });
+    if (!email || !password || !userAddress || !firstName) {
+      return res.status(400).json({ error: "First name, email, password, and user address are required." });
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
-
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ 
-        error: "User with this email already exists" 
-      });
+      return res.status(400).json({ error: "User with this email already exists." });
     }
 
-    // Hash the password
+    // Hash the password before storing
     const hashedPassword = await hashPassword(password);
-   
 
-    // Create the user
-    const user = await prisma.user.create({
+    // Create the new user
+    const newUser = await prisma.user.create({
       data: {
         firstName,
         lastName,
         email,
-        passwordHash: hashedPassword, // Store hashed password
-        location,
-        phone,
+        passwordHash: hashedPassword,
         userAddress,
+        phone,
       },
-      // Don't return the password hash in response
-      select: {
-        id: true, 
+      select: { // Only select the fields you want to return
+        id: true,
+        email: true,
         firstName: true,
         lastName: true,
-        email: true,
-        location: true,
-        phone: true,
-        createdAt: true,
       }
     });
 
-    // Generate JWT token
-    const token = generateToken(user);
-    const refreshToken = generateToken(user);
-   
-    //i wanna update the user with the jwtToken and refreshToken
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { jwtToken: token, refreshToken: refreshToken },
-      select: {
-        id: true, 
-        firstName: true,
-        lastName: true,
-        email: true,
-        location: true,
-        phone: true,
-        createdAt: true,
-      }
-    });
-  
-
- 
+    // Generate a token for the new user
+    const token = generateToken(newUser);
 
     res.status(201).json({
       message: "User created successfully",
-      user,
-      token: token, // This is the JWT token the client should store
+      user: newUser,
+      token: token,
     });
-
   } catch (error) {
-    console.error("Signup error:", error);
-    res.status(500).json({ 
-      error: "Internal server error during signup" 
-    });
+    console.error("Signup Error:", error);
+    res.status(500).json({ error: "Internal server error during signup." });
   }
 });
 
-// Login route - Verify credentials and return JWT token
+// LOGIN: Verify user and return a token
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate required fields
     if (!email || !password) {
-      return res.status(400).json({ 
-        error: "Email and password are required" 
-      });
+      return res.status(400).json({ error: "Email and password are required." });
     }
 
-    // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email }
-    });
-
+    // Find the user by email
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res.status(401).json({ 
-        error: "Invalid email or password" 
-      });
+      return res.status(401).json({ error: "Invalid credentials." });
     }
 
-    // Check password
+    // Compare the provided password with the stored hash
     const isValidPassword = await comparePassword(password, user.passwordHash);
-
     if (!isValidPassword) {
-      return res.status(401).json({ 
-        error: "Invalid email or password" 
-      });
+      return res.status(401).json({ error: "Invalid credentials." });
     }
 
-    // Generate JWT token
-    const jwtToken = generateToken(user);
-
-    // Return user info (without password) and token
-    const { passwordHash, ...userWithoutPassword } = user;
+    // Generate a token for the session
+    const token = generateToken(user);
     
+    // Don't send the password hash back to the client
+    const { passwordHash, ...userWithoutPassword } = user;
+
     res.json({
       message: "Login successful",
       user: userWithoutPassword,
-      token: jwtToken,
+      token: token,
     });
-
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ 
-      error: "Internal server error during login" 
-    });
+    console.error("Login Error:", error);
+    res.status(500).json({ error: "Internal server error during login." });
   }
 });
 
-// Example protected route - requires authentication
+// PROFILE: Fetch the authenticated user's profile
 router.get("/profile", authenticateToken, async (req, res) => {
   try {
-    // req.user is available because of authenticateToken middleware
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
+    const userId = req.user.userId; // Get user ID from the token middleware
+
+    const userProfile = await prisma.user.findUnique({
+      where: { id: userId },
       select: {
         id: true,
         firstName: true,
         lastName: true,
         email: true,
         location: true,
+        userAddress: true,
         phone: true,
+        profilePictureUrl: true,
         createdAt: true,
+      },
+    });
+
+    if (!userProfile) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    res.json({ user: userProfile });
+  } catch (error) {
+    console.error("Profile Fetch Error:", error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+// UPDATE-PROFILE: Update the authenticated user's profile
+router.patch("/profile", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { firstName, lastName, userAddress, phone, location } = req.body;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName,
+        lastName,
+        userAddress,
+        phone,
+        location,
+      },
+      select: { // Return the updated user data
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        userAddress: true,
+        phone: true,
+        location: true,
       }
     });
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.json({ user });
+    res.json({
+      message: "Profile updated successfully.",
+      user: updatedUser,
+    });
   } catch (error) {
-    console.error("Profile error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Profile Update Error:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 });
 

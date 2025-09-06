@@ -1,10 +1,19 @@
 require('dotenv').config(); // Load environment variables
 const express = require("express");
+const cors = require("cors"); // 1. Import the cors package
 const app = express();
 
 const routes = require("./routes/index.route.js");
 
+// --- Middleware ---
 app.use(express.json());
+
+// 2. Use the cors middleware to allow cross-origin requests
+// This will enable CORS for all routes and all origins by default.
+app.use(cors());
+
+// --- Routes ---
+// This line must come AFTER you have used the cors middleware.
 app.use("", routes);
 
 const PORT = process.env.PORT || 5001;
