@@ -1,5 +1,8 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { PrismaClient } = require('@prisma/client');
+
+const prisma = new PrismaClient();
 
 // Secret key for JWT (in production, use environment variable)
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -32,7 +35,7 @@ const hashPassword = async (password) => {
   return await bcrypt.hash(password, 10);
 };
 
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
   console.log('Auth middleware triggered');
   console.log('Headers:', req.headers);
   console.log('Authorization header:', req.headers.authorization);
@@ -56,6 +59,18 @@ const authenticateToken = (req, res, next) => {
     }
     
     console.log('Decoded user:', decoded);
+    
+    // Check if the token still exists in the database (hasn't been logged out)
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { jwtToken: true }
+    });
+    
+    if (!user || user.jwtToken !== token) {
+      console.log('Token not found in database or user logged out');
+      return res.status(403).json({ error: 'Token has been invalidated. Please log in again.' });
+    }
+    
     // Add user info to request object so other routes can use it
     req.user = decoded;
     next(); // Continue to the next middleware/route handler
