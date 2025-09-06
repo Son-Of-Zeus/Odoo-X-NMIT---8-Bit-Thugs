@@ -11,11 +11,11 @@ interface ProductDetailScreenProps {
   onAddToCart: () => void;
 }
 
-// Mock product data
+// Mock product data updated to remove seller rating
 const mockProduct = {
   id: "1",
   title: "Vintage Oak Coffee Table",
-  price: 125,
+  price: 2, 
   category: "Home",
   condition: "Good",
   description: "Beautiful vintage oak coffee table with a rich, warm finish. This piece has been well-maintained and shows minimal wear. Perfect for adding character to any living room. Dimensions: 48\" L x 24\" W x 16\" H. Some minor scratches on the surface that add to its vintage charm.",
@@ -24,14 +24,16 @@ const mockProduct = {
   ],
   seller: {
     name: "Sarah M.",
-    avatar: "https://images.unsplash.com/photo-1704726135027-9c6f034cfa41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1c2VyJTIwcHJvZmlsZSUyMGF2YXRhcnxlbnwxfHx8fDE3NTcwOTI3MTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.8,
+    avatar: "https://images.unsplash.com/photo-1704726135027-9c6f034cfa41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1c2VyJTIwcHJvZmlsZSUyMGF2YXRhcnxlbnwxfHx8fDE3NTcwOTI3MTB8MA&ixlib-rb-4.1.0&q=80&w=1080",
     location: "San Francisco, CA"
   },
   posted: "3 days ago"
 };
 
 export function ProductDetailScreen({ onNavigate, onAddToCart }: ProductDetailScreenProps) {
+  const INR_CONVERSION_RATE = 83;
+  const priceInInr = mockProduct.price * INR_CONVERSION_RATE;
+
   const handleAddToCart = () => {
     onAddToCart();
     // Could show a toast notification here
@@ -95,7 +97,7 @@ export function ProductDetailScreen({ onNavigate, onAddToCart }: ProductDetailSc
               </h1>
               
               <div className="text-3xl font-semibold text-primary mb-4">
-                ${mockProduct.price}
+                ₹{priceInInr.toLocaleString('en-IN')}
               </div>
               
               <p className="text-muted-foreground leading-relaxed">
@@ -116,7 +118,7 @@ export function ProductDetailScreen({ onNavigate, onAddToCart }: ProductDetailSc
                       {mockProduct.seller.name}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      ⭐ {mockProduct.seller.rating} • {mockProduct.seller.location}
+                      {mockProduct.seller.location}
                     </div>
                   </div>
                   <Button variant="outline" size="sm" className="rounded-lg">
@@ -134,13 +136,6 @@ export function ProductDetailScreen({ onNavigate, onAddToCart }: ProductDetailSc
               >
                 <ShoppingCart size={18} className="mr-2" />
                 Add to Cart
-              </Button>
-              
-              <Button
-                variant="outline"
-                className="w-full border-border rounded-lg h-12"
-              >
-                Message Seller
               </Button>
             </div>
 
