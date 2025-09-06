@@ -1,0 +1,32 @@
+{
+  "name": "odoo-x-nmit---8-bit-thugs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Son-Of-Zeus/Odoo-X-NMIT---8-Bit-Thugs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Son-Of-Zeus/Odoo-X-NMIT---8-Bit-Thugs/issues"
+  },
+  "homepage": "https://github.com/Son-Of-Zeus/Odoo-X-NMIT---8-Bit-Thugs#readme",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^6.15.0",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.2",
+    "jsonwebtoken": "^9.0.2",
+    "prisma": "^6.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
