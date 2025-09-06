@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, Edit, MapPin, Star } from "lucide-react";
+import { ArrowLeft, Camera, Edit, MapPin } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -12,16 +12,16 @@ interface UserProfileScreenProps {
 }
 
 export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
+  // User object updated to include a phone number
   const user = {
     name: "Sarah Miller",
     email: "sarah.miller@email.com",
+    phone: "+1 (555) 123-4567",
     avatar: "https://images.unsplash.com/photo-1704726135027-9c6f034cfa41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1c2VyJTIwcHJvZmlsZSUyMGF2YXRhcnxlbnwxfHx8fDE3NTcwOTI3MTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
     location: "San Francisco, CA",
     joinDate: "March 2023",
-    rating: 4.8,
     totalSales: 24,
     totalPurchases: 18,
-    bio: "Passionate about sustainable living and finding treasures new homes. I love vintage furniture and helping reduce waste through second-hand shopping!"
   };
 
   return (
@@ -53,9 +53,8 @@ export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Info */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Avatar & Basic Info */}
+          {/* Profile Info Card (Left Column) */}
+          <div className="lg:col-span-1">
             <Card className="border-border rounded-xl">
               <CardContent className="p-6 text-center">
                 <div className="relative inline-block mb-4">
@@ -78,53 +77,15 @@ export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
                   {user.name}
                 </h2>
                 
-                <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
+                <div className="flex items-center justify-center gap-1 text-muted-foreground">
                   <MapPin size={14} />
                   <span className="text-sm">{user.location}</span>
-                </div>
-                
-                <div className="flex items-center justify-center gap-1 mb-4">
-                  <Star size={14} className="text-primary" />
-                  <span className="text-sm font-medium">{user.rating}</span>
-                  <span className="text-sm text-muted-foreground">(42 reviews)</span>
-                </div>
-                
-                <p className="text-sm text-muted-foreground text-left">
-                  {user.bio}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Stats */}
-            <Card className="border-border rounded-xl">
-              <CardHeader>
-                <CardTitle className="text-base">Activity</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 pt-0">
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Member since</span>
-                    <span className="font-medium">{user.joinDate}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Items sold</span>
-                    <Badge variant="secondary" className="bg-accent text-accent-foreground">
-                      {user.totalSales}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Items purchased</span>
-                    <Badge variant="secondary" className="bg-accent text-accent-foreground">
-                      {user.totalPurchases}
-                    </Badge>
-                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Profile Settings */}
+          {/* Settings & Activity (Right Column) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Personal Information */}
             <Card className="border-border rounded-xl">
@@ -160,6 +121,16 @@ export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
                     className="bg-input-background border-border rounded-lg"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    defaultValue={user.phone}
+                    className="bg-input-background border-border rounded-lg"
+                  />
+                </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>
@@ -168,6 +139,34 @@ export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
                     defaultValue={user.location}
                     className="bg-input-background border-border rounded-lg"
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Activity Stats */}
+            <Card className="border-border rounded-xl">
+              <CardHeader>
+                <CardTitle className="text-base">Activity</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 pt-0">
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Member since</span>
+                    <span className="font-medium">{user.joinDate}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Items sold</span>
+                    <Badge variant="secondary" className="bg-accent text-accent-foreground">
+                      {user.totalSales}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Items purchased</span>
+                    <Badge variant="secondary" className="bg-accent text-accent-foreground">
+                      {user.totalPurchases}
+                    </Badge>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -191,18 +190,6 @@ export function UserProfileScreen({ onNavigate }: UserProfileScreenProps) {
                   onClick={() => onNavigate("purchases")}
                 >
                   Purchase History
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-border rounded-lg"
-                >
-                  Saved Items
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-border rounded-lg"
-                >
-                  Settings & Preferences
                 </Button>
               </CardContent>
             </Card>
