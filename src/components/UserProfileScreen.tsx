@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { ArrowLeft, Camera, Edit, MapPin, Star } from "lucide-react";
+import { ArrowLeft, Camera, Edit, MapPin } from "lucide-react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -14,7 +13,8 @@ interface UserProfile {
   email: string;
   avatar: string;
   location: string;
-  bio: string;
+  phoneNumber: string; 
+  bio?: string; // Bio can be optional as it's in the edit dialog
 }
 
 interface UserProfileScreenProps {
@@ -27,10 +27,10 @@ interface UserProfileScreenProps {
 export function UserProfileScreen({ onNavigate, onGoBack, userProfile, onUpdateProfile }: UserProfileScreenProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
+  // The user object dynamically uses the profile data passed in props
   const user = {
     ...userProfile,
     joinDate: "March 2023",
-    rating: 4.8,
     totalSales: 24,
     totalPurchases: 18
   };
@@ -52,7 +52,6 @@ export function UserProfileScreen({ onNavigate, onGoBack, userProfile, onUpdateP
               </Button>
               <h1 className="text-lg font-medium">Profile</h1>
             </div>
-            
             <Button 
               variant="outline" 
               className="rounded-lg"
@@ -68,9 +67,8 @@ export function UserProfileScreen({ onNavigate, onGoBack, userProfile, onUpdateP
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Info */}
+          {/* Left Column: Profile Info & Stats */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Avatar & Basic Info */}
             <Card className="border-border rounded-xl">
               <CardContent className="p-6 text-center">
                 <div className="relative inline-block mb-4">
@@ -89,29 +87,16 @@ export function UserProfileScreen({ onNavigate, onGoBack, userProfile, onUpdateP
                     <Camera size={14} />
                   </Button>
                 </div>
-                
                 <h2 className="text-xl font-medium text-foreground mb-1">
                   {user.name}
                 </h2>
-                
                 <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
                   <MapPin size={14} />
                   <span className="text-sm">{user.location}</span>
                 </div>
-                
-                <div className="flex items-center justify-center gap-1 mb-4">
-                  <Star size={14} className="text-primary" />
-                  <span className="text-sm font-medium">{user.rating}</span>
-                  <span className="text-sm text-muted-foreground">(42 reviews)</span>
-                </div>
-                
-                <p className="text-sm text-muted-foreground text-left">
-                  {user.bio}
-                </p>
               </CardContent>
             </Card>
 
-            {/* Stats */}
             <Card className="border-border rounded-xl">
               <CardHeader>
                 <CardTitle className="text-base">Activity</CardTitle>
@@ -140,9 +125,8 @@ export function UserProfileScreen({ onNavigate, onGoBack, userProfile, onUpdateP
             </Card>
           </div>
 
-          {/* Profile Settings */}
+          {/* Right Column: Details & Actions */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Personal Information */}
             <Card className="border-border rounded-xl">
               <CardHeader>
                 <CardTitle>Personal Information</CardTitle>
@@ -162,31 +146,27 @@ export function UserProfileScreen({ onNavigate, onGoBack, userProfile, onUpdateP
                     </div>
                   </div>
                 </div>
-                
                 <div className="space-y-2">
                   <Label>Email</Label>
                   <div className="text-sm text-foreground bg-muted rounded-lg px-3 py-2">
                     {user.email}
                   </div>
                 </div>
-                
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <div className="text-sm text-foreground bg-muted rounded-lg px-3 py-2">
+                    {user.phoneNumber || 'Not provided'}
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label>Location</Label>
                   <div className="text-sm text-foreground bg-muted rounded-lg px-3 py-2">
                     {user.location || 'Not provided'}
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Bio</Label>
-                  <div className="text-sm text-foreground bg-muted rounded-lg px-3 py-2 min-h-[60px]">
-                    {user.bio || 'No bio provided'}
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
-            {/* Quick Actions */}
             <Card className="border-border rounded-xl">
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
@@ -206,25 +186,10 @@ export function UserProfileScreen({ onNavigate, onGoBack, userProfile, onUpdateP
                 >
                   Purchase History
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-border rounded-lg"
-                  onClick={() => onNavigate("saved-items")}
-                >
-                  Saved Items
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-border rounded-lg"
-                  onClick={() => onNavigate("settings")}
-                >
-                  Settings & Preferences
-                </Button>
               </CardContent>
             </Card>
 
-            {/* Edit Button */}
-            <div className="flex justify-center">
+            <div className="flex justify-center mt-6">
               <Button 
                 className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-8"
                 onClick={() => setIsEditDialogOpen(true)}
